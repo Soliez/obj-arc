@@ -6,11 +6,19 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UniformTypeIdentifiers/UTType.h>
+#import <AppKit/NSPasteboard.h>
+#import <objc/runtime.h>
+
+
+BOOL isArchivable(id obj);
+NSData *DumpObject(id *obj);
+id LoadObject(NSData *archive);
+
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        // insert code here...
-        NSLog(@"Hello, World!");
+        
     }
     return EXIT_SUCCESS;
 }
