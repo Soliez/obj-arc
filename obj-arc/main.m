@@ -11,19 +11,31 @@
 #import <objc/runtime.h>
 
 
+BOOL conformsToNSCoding(id obj)
+{
+    return [obj conformsToProtocol:@protocol(NSCoding)] ? YES : NO;
+}
+
+BOOL conformsToNSSecureCoding(id obj)
+{
+    return [obj conformsToProtocol:@protocol(NSSecureCoding)] ? YES : NO;
+}
+
 BOOL isCodable(id obj)
 {
     if (!obj){ return NO; }
     Class class = object_getClass(obj);
-    return ([obj conformsToProtocol:@protocol(NSCoding)] | [obj conformsToProtocol:@protocol(NSSecureCoding)]) ? YES : NO;
+    return (conformsToNSCoding(obj) | conformsToNSSecureCoding(obj)) ? YES : NO;
 }
 
 BOOL requiresSecureCoding(id obj)
 {
     if (!obj){ return NO; }
     Class class = object_getClass(obj);
-    return (![obj conformsToProtocol:@protocol(NSCoding)] && [obj conformsToProtocol:@protocol(NSSecureCoding)]) ? YES : NO;
+    return (!conformsToNSCoding(obj) && conformsToNSSecureCoding(obj)) ? YES : NO;
 }
+
+static void LogObject(id obj);
 
 
 // TODO: Implement NSKeyedArchive load/dump operations
