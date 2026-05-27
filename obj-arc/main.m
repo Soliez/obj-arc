@@ -11,6 +11,7 @@
 #import <objc/runtime.h>
 
 
+
 BOOL conformsToNSCoding(id obj)
 {
     return [obj conformsToProtocol:@protocol(NSCoding)] ? YES : NO;
@@ -24,14 +25,18 @@ BOOL conformsToNSSecureCoding(id obj)
 BOOL isCodable(id obj)
 {
     if (!obj){ return NO; }
-    Class class = object_getClass(obj);
     return (conformsToNSCoding(obj) | conformsToNSSecureCoding(obj)) ? YES : NO;
+}
+
+BOOL supportsSecureCoding(id obj)
+{
+    if (!obj){ return NO; }
+    return (conformsToNSCoding(obj) && conformsToNSSecureCoding(obj)) ? YES : NO;
 }
 
 BOOL requiresSecureCoding(id obj)
 {
     if (!obj){ return NO; }
-    Class class = object_getClass(obj);
     return (!conformsToNSCoding(obj) && conformsToNSSecureCoding(obj)) ? YES : NO;
 }
 
@@ -49,16 +54,44 @@ static void LogObject(id obj)
     [lines addObject:[NSString stringWithFormat:@"Conforms to NSCoding: %@", (conformsToNSCoding(obj) ? @"YES" : @"NO")]];
     [lines addObject:[NSString stringWithFormat:@"Conforms to NSSecureCoding: %@", conformsToNSSecureCoding(obj) ? @"YES" : @"NO"]];
     
+    [lines addObject:[NSString stringWithFormat:@"Responds to -count: %@", ([obj respondsToSelector:@selector(count)] ? @"YES" : @"NO")]];
+    [lines addObject:[NSString stringWithFormat:@"Responds to -allKeys: %@", ([obj respondsToSelector:@selector(allKeys)] ? @"YES" : @"NO")]];
+    
     NSString *message = [lines componentsJoinedByString:@"\n"];
     NSLog(@"%@", message);
 }
 
 
-// TODO: Implement NSKeyedArchive load/dump operations
-NSData *DumpObject(id *obj);
-id LoadObject(NSData *archive);
+id LoadObject(NSData *archiveData)
+{
+    NSError *error = nil;
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc]
+                                     initForReadingFromData:archiveData
+                                     error:&error];
+    if (!unarchiver && error) {
+        NSLog(@"Error: Failed to load initialize NSKeyedUnarchiver with Data '%@'. %@",
+              archiveData,
+              [error localizedDescription]);
+        return nil;
+    }
+    
+    id obj = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+    return obj;
+}
 
-
+NSData *DumpObject(id obj)
+{
+    if (!obj) { return nil; }
+    NSError *error = nil;
+    BOOL secure = requiresSecureCoding(obj);
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:obj
+                                       requiringSecureCoding:secure
+                                                       error:&error];
+    if (!data && error) {
+        NSLog(@"Error archiving object of class %@: %@", NSStringFromClass([obj class]), error.localizedDescription);
+    }
+    return data;
+}
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
@@ -66,3 +99,4 @@ int main(int argc, const char * argv[]) {
     }
     return EXIT_SUCCESS;
 }
+
