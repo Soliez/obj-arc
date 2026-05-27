@@ -35,14 +35,29 @@ BOOL requiresSecureCoding(id obj)
     return (!conformsToNSCoding(obj) && conformsToNSSecureCoding(obj)) ? YES : NO;
 }
 
-static void LogObject(id obj);
+static void LogObject(id obj)
+{
+    if (!obj) { NSLog(@"Error: Object is nil"); }
+    
+    Class class = object_getClass(obj);
+    
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    
+    [lines addObject:[NSString stringWithFormat:@"Object: %@", (obj)]];
+    [lines addObject:[NSString stringWithFormat:@"Class: %@", NSStringFromClass(class)]];
+    [lines addObject:[NSString stringWithFormat:@"Superclass: %@", NSStringFromClass(class_getSuperclass(class))]];
+    [lines addObject:[NSString stringWithFormat:@"Conforms to NSCoding: %@", (conformsToNSCoding(obj) ? @"YES" : @"NO")]];
+    [lines addObject:[NSString stringWithFormat:@"Conforms to NSSecureCoding: %@", conformsToNSSecureCoding(obj) ? @"YES" : @"NO"]];
+    
+    NSString *message = [lines componentsJoinedByString:@"\n"];
+    NSLog(@"%@", message);
+}
 
 
 // TODO: Implement NSKeyedArchive load/dump operations
-
 NSData *DumpObject(id *obj);
-
 id LoadObject(NSData *archive);
+
 
 
 int main(int argc, const char * argv[]) {
