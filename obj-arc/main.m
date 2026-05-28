@@ -83,10 +83,10 @@ NSData *DumpObject(id obj)
 {
     if (!obj) { return nil; }
     NSError *error = nil;
-    BOOL secure = requiresSecureCoding(obj);
+    BOOL useSecureCoding = requiresSecureCoding(obj);
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:obj
-                                       requiringSecureCoding:secure
-                                                       error:&error];
+                                    requiringSecureCoding:useSecureCoding
+                                    error:&error];
     if (!data && error) {
         NSLog(@"Error archiving object of class %@: %@", NSStringFromClass([obj class]), error.localizedDescription);
     }
