@@ -1,10 +1,11 @@
 #import <objc/runtime.h>
 
-#import "ObjectCoder.h"
+#import "DynamicArchiver.h"
 
 
-@implementation ObjectCoder
+@implementation DynamicArchiver
 
+// Runtime helpers
 + (BOOL)conformsToNSCoding:(id)obj
 {
     return [obj conformsToProtocol:@protocol(NSCoding)] ? YES : NO;
@@ -33,6 +34,20 @@
     return (![self conformsToNSCoding:obj] && [self conformsToNSSecureCoding:obj]) ? YES : NO;
 }
 
++ (Class)addNSCodingSupport:(Class)cls
+{
+    if (!class_addProtocol(cls, @protocol(NSCoding))) { return nil; }
+    return cls;
+}
+
++ (Class)addNSSecureCodingSupport:(Class)cls
+{
+    if (!class_addProtocol(cls, @protocol(NSSecureCoding))) { return nil; }
+    return cls;
+}
+
+
+// Debug helpers
 + (void)logObject:(id)obj
 {
     if (!obj) { NSLog(@"Error: Object is nil"); return; }
@@ -49,6 +64,8 @@
     NSLog(@"%@", message);
 }
 
+
+// NSKeyedArchive reading/writing helpers
 + (id)loadObjectFromArchiveData:(NSData *)archiveData
 {
     if (!archiveData) { return nil; }

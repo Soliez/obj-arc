@@ -10,7 +10,7 @@
 #import <AppKit/NSPasteboard.h>
 #import <objc/runtime.h>
 
-#import "ObjectCoder.h"
+#import "DynamicArchiver.h"
 
 
 int main(int argc, const char * argv[]) {

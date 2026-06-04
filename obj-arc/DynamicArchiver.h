@@ -2,13 +2,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface ObjectCoder : NSObject
+@interface DynamicArchiver : NSObject
 
 + (BOOL)conformsToNSCoding:(id)obj;
 + (BOOL)conformsToNSSecureCoding:(id)obj;
 + (BOOL)isCodable:(id)obj;
 + (BOOL)supportsSecureCoding:(id)obj;
 + (BOOL)requiresSecureCoding:(id)obj;
+
++ (nullable Class)addNSCodingSupport:(Class)cls;
++ (nullable Class)addNSSecureCodingSupport:(Class)cls;
 
 + (void)logObject:(id)obj;
 
