@@ -8,43 +8,42 @@
 // Runtime helpers
 + (BOOL)conformsToNSCoding:(id)obj
 {
-    return [obj conformsToProtocol:@protocol(NSCoding)] ? YES : NO;
+    if (!obj) { return NO; }
+    return [obj conformsToProtocol:@protocol(NSCoding)];
 }
 
 + (BOOL)conformsToNSSecureCoding:(id)obj
 {
-    return [obj conformsToProtocol:@protocol(NSSecureCoding)] ? YES : NO;
+    if (!obj) { return NO; }
+    return [obj conformsToProtocol:@protocol(NSSecureCoding)];
 }
 
 + (BOOL)isCodable:(id)obj
 {
     if (!obj){ return NO; }
-    return ([self conformsToNSCoding:obj] | [self conformsToNSSecureCoding:obj]) ? YES : NO;
+    return ([self conformsToNSCoding:obj] || [self conformsToNSSecureCoding:obj]) ? YES : NO;
 }
 
 + (BOOL)supportsSecureCoding:(id)obj
 {
-    if (!obj){ return NO; }
-    return ([self conformsToNSCoding:obj] && [self conformsToNSSecureCoding:obj]) ? YES : NO;
+    if (!obj) { return NO; }
+    Class cls = [obj class];
+    if (![cls conformsToProtocol:@protocol(NSSecureCoding)]) { return NO; }
+    if (![cls respondsToSelector:@selector(supportsSecureCoding)]) { return NO; }
+    return [cls supportsSecureCoding];
 }
 
-+ (BOOL)requiresSecureCoding:(id)obj
-{
-    if (!obj){ return NO; }
-    return (![self conformsToNSCoding:obj] && [self conformsToNSSecureCoding:obj]) ? YES : NO;
-}
-
-+ (Class)addNSCodingSupport:(Class)cls
-{
-    if (!class_addProtocol(cls, @protocol(NSCoding))) { return nil; }
-    return cls;
-}
-
-+ (Class)addNSSecureCodingSupport:(Class)cls
-{
-    if (!class_addProtocol(cls, @protocol(NSSecureCoding))) { return nil; }
-    return cls;
-}
+//+ (Class)addNSCodingSupport:(Class)cls
+//{
+//    if (!class_addProtocol(cls, @protocol(NSCoding))) { return nil; }
+//    return cls;
+//}
+//
+//+ (Class)addNSSecureCodingSupport:(Class)cls
+//{
+//    if (!class_addProtocol(cls, @protocol(NSSecureCoding))) { return nil; }
+//    return cls;
+//}
 
 
 // Debug helpers
@@ -81,9 +80,8 @@
 
 + (NSData *)dumpObjectToArchiveData:(id)obj
 {
-    if (!obj) { return nil; }
     NSError *error = nil;
-    BOOL useSecureCoding = [self requiresSecureCoding:obj];
+    BOOL useSecureCoding = [self supportsSecureCoding:obj];
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:obj requiringSecureCoding:useSecureCoding error:&error];
     if (!data && error) {
         NSLog(@"Error archiving object of class %@: %@", NSStringFromClass([obj class]), error.localizedDescription);
