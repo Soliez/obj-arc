@@ -9,9 +9,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isCodable:(id)obj;
 + (BOOL)supportsSecureCoding:(id)obj;
 
-//+ (nullable Class)addNSCodingSupport:(Class)cls;
-//+ (nullable Class)addNSSecureCodingSupport:(Class)cls;
-
 + (void)logObject:(id)obj;
 
 + (nullable id)loadObjectFromArchiveData:(NSData *)archiveData;

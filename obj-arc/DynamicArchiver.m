@@ -33,19 +33,6 @@
     return [cls supportsSecureCoding];
 }
 
-//+ (Class)addNSCodingSupport:(Class)cls
-//{
-//    if (!class_addProtocol(cls, @protocol(NSCoding))) { return nil; }
-//    return cls;
-//}
-//
-//+ (Class)addNSSecureCodingSupport:(Class)cls
-//{
-//    if (!class_addProtocol(cls, @protocol(NSSecureCoding))) { return nil; }
-//    return cls;
-//}
-
-
 // Debug helpers
 + (void)logObject:(id)obj
 {
