@@ -17,9 +17,35 @@
 
 @implementation DynamicArchiveContainer
 
+
 + (BOOL)supportsSecureCoding
 {
     return YES;
+}
+
+
++ (NSMutableSet<Class> *)allowedClasses
+{
+    static NSSet<Class> *classes = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        classes = [NSSet setWithObjects:
+          [NSDictionary class],
+          [NSMutableDictionary class],
+          [NSArray class],
+          [NSMutableArray class],
+          [NSSet class],
+          [NSMutableSet class],
+          [NSString class],
+          [NSNumber class],
+          [NSData class],
+          [NSDate class],
+          [NSURL class],
+          [NSNull class],
+          nil
+        ];
+    });
+    return [classes mutableCopy];
 }
 
 
@@ -78,25 +104,7 @@
 {
     if (!obj) { return YES; }
     
-    static NSSet<Class> *classes = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSSet<Class> *classes = [NSSet setWithObjects:
-          [NSDictionary class],
-          [NSMutableDictionary class],
-          [NSArray class],
-          [NSMutableArray class],
-          [NSSet class],
-          [NSMutableSet class],
-          [NSString class],
-          [NSNumber class],
-          [NSData class],
-          [NSDate class],
-          [NSURL class],
-          [NSNull class],
-          nil
-        ];
-    });
+    NSSet<Class> *classes = [self allowedClasses];
     
     // obj is an instance of a class in the allow-list
     for (Class cls in classes) {
@@ -104,14 +112,13 @@
     }
     
     // obj is a class that explicitly conforms to either codable protocol
-    if ([obj conformsToProtocol:@protocol(NSSecureCoding)] || [obj conformsToProtocol:@protocol(NSSecureCoding)]) {
+    if ([obj conformsToProtocol:@protocol(NSSecureCoding)] || [obj conformsToProtocol:@protocol(NSCoding)]) {
         return YES;
     }
     
     // all checks failed, obj is not archivable by default
     return NO;
 }
-
 
 
 - (instancetype)initWithObject:(id)obj
@@ -140,22 +147,7 @@
     
     _originalClassName = [coder decodeObjectOfClass:[NSString class] forKey:@"originalClassName"];
     
-    NSSet *whitelist = [NSSet setWithObjects:
-        [NSDictionary class],
-        [NSMutableDictionary class],
-        [NSArray class],
-        [NSMutableArray class],
-        [NSSet class],
-        [NSMutableSet class],
-        [NSString class],
-        [NSNumber class],
-        [NSData class],
-        [NSDate class],
-        [NSURL class],
-        [NSNull class],
-        nil
-    ];
-    _encodedIvars = [coder decodeObjectOfClasses:whitelist forKey:@"encodedIvars"];
+    _encodedIvars = [coder decodeObjectOfClasses:[DynamicArchiveContainer allowedClasses] forKey:@"encodedIvars"];
    
     return self;
 }
@@ -185,7 +177,7 @@
         if (!typeEncodingRaw) { continue; }
         
         NSString *typeEncoding = [NSString stringWithUTF8String:typeEncodingRaw];
-        if ([typeEncoding hasPrefix:@"@"]) { continue; }
+        if (![typeEncoding hasPrefix:@"@"]) { continue; }
         
         id value = self.encodedIvars[ivarName];
         
@@ -203,3 +195,4 @@
 
 
 @end
+
