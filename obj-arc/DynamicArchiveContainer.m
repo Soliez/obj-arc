@@ -5,10 +5,15 @@
 //  Created by Erik Solis  on 2026-06-03.
 //
 
+/** Container class for wrapping non-NSKeyedArchivable objects **/
+
+
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 
 #import "DynamicArchiveContainer.h"
+
+
 
 @implementation DynamicArchiveContainer
 
@@ -58,6 +63,7 @@
                 /*
                  TODO: Implement primitive Ivar archival support
                  */
+                
                 results[name] = [NSString stringWithFormat:@"<Unsupported Primitive Ivar: %@>", typeEncoding];
             }
         }
@@ -70,7 +76,7 @@
 
 + (BOOL)isFoundationArchivableObject:(id)obj
 {
-    if (!obj) { return YES; } // nil values are already archivable
+    if (!obj) { return YES; }
     
     static NSSet<Class> *classes = nil;
     static dispatch_once_t onceToken;

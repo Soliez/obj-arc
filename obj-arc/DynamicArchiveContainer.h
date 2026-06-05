@@ -5,6 +5,9 @@
 //  Created by Erik Solis  on 2026-06-03.
 //
 
+/** Container class for wrapping non-NSKeyedArchivable objects **/
+
+
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN

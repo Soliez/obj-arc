@@ -1,6 +1,7 @@
 #import <objc/runtime.h>
 
 #import "DynamicArchiver.h"
+#import "DynamicArchiveContainer.h"
 
 
 @implementation DynamicArchiver
@@ -54,25 +55,121 @@
 // NSKeyedArchive reading/writing helpers
 + (id)loadObjectFromArchiveData:(NSData *)archiveData
 {
-    if (!archiveData) { return nil; }
     NSError *error = nil;
-    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:archiveData error:&error];
-    if (!unarchiver && error) {
-        NSLog(@"Error: Failed to initialize NSKeyedUnarchiver with Data '%@'. %@", archiveData, error.localizedDescription);
+    id obj = [self loadObjectFromArchiveData:archiveData error:&error];
+    if (!obj) {
+        NSLog(@"Failed to unarchive data '%@': %@", archiveData, error.localizedDescription);
         return nil;
     }
-    id obj = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
     return obj;
 }
+
++ (id)loadObjectFromArchiveData:(NSData *)archiveData error:(NSError **)error
+{
+    if (!archiveData) {
+        if (error) {
+            *error = [NSError errorWithDomain:@"DynamicArchiver"
+                                         code:3
+                                     userInfo:@{NSLocalizedDescriptionKey: @"Unable to unarchive nil data"}];
+        }
+        return nil;
+    }
+    
+    NSSet *whitelist = [NSSet setWithObjects:
+        [NSDictionary class],
+        [NSMutableDictionary class],
+        [NSArray class],
+        [NSMutableArray class],
+        [NSSet class],
+        [NSMutableSet class],
+        [NSString class],
+        [NSNumber class],
+        [NSData class],
+        [NSDate class],
+        [NSURL class],
+        [NSNull class],
+        nil
+    ];
+    
+    id obj = nil;
+    
+    @try {
+        obj = [NSKeyedUnarchiver unarchivedObjectOfClasses:whitelist
+                                                  fromData:archiveData
+                                                     error:error];
+    } @catch (NSException *exception) {
+        if (error) {
+            *error = [NSError errorWithDomain:@"DynamicArchiver"
+                                         code:4
+                                     userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Exception raised during unarchiving: %@", exception.reason ?: exception.name]}];
+        }
+        return nil;
+    }
+    
+    /*
+     If the unarchived object is an instance of our DynamicArchiveContainer class,
+    reconstruct the original object using the classes reconstructedObject method
+    */
+    if ([obj isKindOfClass:[DynamicArchiveContainer class]]) {
+        return [obj reconstructedObject];
+    }
+    
+    return obj;
+}
+
 
 + (NSData *)dumpObjectToArchiveData:(id)obj
 {
     NSError *error = nil;
-    BOOL useSecureCoding = [self supportsSecureCoding:obj];
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:obj requiringSecureCoding:useSecureCoding error:&error];
+    NSData *data = [self dumpObjectToArchiveData:obj error:&error];
+    
     if (!data && error) {
-        NSLog(@"Error archiving object of class %@: %@", NSStringFromClass([obj class]), error.localizedDescription);
+        NSLog(@"Error archiving object %@: %@", obj, error.localizedDescription);
     }
+    return data;
+}
+
++ (NSData *)dumpObjectToArchiveData:(id)obj error:(NSError **)error
+{
+    if (!obj){
+        if (error) {
+            *error = [NSError errorWithDomain:@"DynamicArchiver"
+                                         code:1
+                                     userInfo:@{NSLocalizedDescriptionKey: @"Cannot archive nil object"}
+            ];
+        }
+        return nil;
+    }
+    
+    id rootObject = obj;
+    BOOL requiringSecureCoding = NO;
+    
+    if ([self supportsSecureCoding:obj]) {
+        requiringSecureCoding = YES;
+    } else if ([self conformsToNSCoding:obj]) {
+        requiringSecureCoding = NO;
+    } else {
+        rootObject = [[DynamicArchiveContainer alloc] initWithObject:obj];
+        requiringSecureCoding = YES;
+    }
+    
+    NSData *data = nil;
+    
+    @try {
+        data = [NSKeyedArchiver archivedDataWithRootObject:rootObject
+                                     requiringSecureCoding:requiringSecureCoding
+                                                     error:error];
+    } @catch (NSException *exception) {
+        if (error) {
+            *error = [NSError errorWithDomain:@"DynamicArchiver"
+                                         code:2
+                                     userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Exception raised during archiving: %@", exception.reason ?: exception.name]}
+            ];
+        }
+        
+        return nil;
+    }
+    
     return data;
 }
 

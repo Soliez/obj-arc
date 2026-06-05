@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable id)loadObjectFromArchiveData:(NSData *)archiveData;
 + (nullable NSData *)dumpObjectToArchiveData:(id)obj;
 
++ (nullable id)loadObjectFromArchiveData:(NSData *)archiveData error:(NSError **)error;
++ (nullable NSData *)dumpObjectToArchiveData:(id)obj error:(NSError **)error;
+
 @end
 
 NS_ASSUME_NONNULL_END
