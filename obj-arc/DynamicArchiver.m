@@ -7,6 +7,7 @@
 @implementation DynamicArchiver
 
 // Runtime helpers
+
 + (BOOL)conformsToNSCoding:(id)obj
 {
     if (!obj) { return NO; }
@@ -32,6 +33,30 @@
     if (![cls conformsToProtocol:@protocol(NSSecureCoding)]) { return NO; }
     if (![cls respondsToSelector:@selector(supportsSecureCoding)]) { return NO; }
     return [cls supportsSecureCoding];
+}
+
++ (NSMutableSet<Class> *)allowedClasses
+{
+    static NSSet<Class> *classes = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        classes = [NSSet setWithObjects:
+          [NSDictionary class],
+          [NSMutableDictionary class],
+          [NSArray class],
+          [NSMutableArray class],
+          [NSSet class],
+          [NSMutableSet class],
+          [NSString class],
+          [NSNumber class],
+          [NSData class],
+          [NSDate class],
+          [NSURL class],
+          [NSNull class],
+          nil
+        ];
+    });
+    return [classes mutableCopy];
 }
 
 // Debug helpers
@@ -75,21 +100,7 @@
         return nil;
     }
     
-    NSSet *whitelist = [NSSet setWithObjects:
-        [NSDictionary class],
-        [NSMutableDictionary class],
-        [NSArray class],
-        [NSMutableArray class],
-        [NSSet class],
-        [NSMutableSet class],
-        [NSString class],
-        [NSNumber class],
-        [NSData class],
-        [NSDate class],
-        [NSURL class],
-        [NSNull class],
-        nil
-    ];
+    NSSet *whitelist = [self allowedClasses];
     
     id obj = nil;
     
