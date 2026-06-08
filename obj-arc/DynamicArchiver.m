@@ -53,6 +53,7 @@
           [NSDate class],
           [NSURL class],
           [NSNull class],
+          [DynamicArchiveContainer class],
           nil
         ];
     });

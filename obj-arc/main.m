@@ -11,6 +11,7 @@
 #import <objc/runtime.h>
 
 #import "TestClasses/TestPerson.h"
+#import "IOHelper.h"
 #import "DynamicArchiver.h"
 
 
@@ -29,6 +30,23 @@ int main(int argc, const char * argv[]) {
         }
         
         NSLog(@"Size of archive in bytes: %lu", (unsigned long)data.length);
+        NSLog(@"Archive data: %@", data);
+        
+        NSString *outFile = [NSString stringWithFormat:(@"/Users/erik/Developer/ObjC/obj-arc/obj-arc/TestOutput/%@_archived"), NSStringFromClass([person class])];
+        
+        NSData *archivePlist = [IOHelper convertPropertyList:data toFormat:NSPropertyListXMLFormat_v1_0];
+        if (!archivePlist) {
+            NSLog(@"Failed †ø convert archived object data %@ to a XML plist", data);
+            return EXIT_FAILURE;
+        }
+        
+        BOOL successfulWrite = [IOHelper writeData:archivePlist ToFile:outFile];
+        if (successfulWrite)
+        {
+            NSLog(@"Wrote archived object to '%@'", outFile);
+        } else {
+            NSLog(@"Failed to write archived object to '%@'", outFile);
+        }
         
         id restoredObj = [DynamicArchiver loadObjectFromArchiveData:data error:&error];
         

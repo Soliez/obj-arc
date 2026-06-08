@@ -26,7 +26,7 @@
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"<TestPerson(name=%@, age=%@) at %p>", _name, _age, &self];
+    return [NSString stringWithFormat:@"<%@: %p>", NSStringFromClass([self class]), self];
 }
 
 @end

@@ -42,6 +42,7 @@
           [NSDate class],
           [NSURL class],
           [NSNull class],
+          [self class],
           nil
         ];
     });
